@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Steganography Demo - Om Patil</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #00ff00;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .header h1 {
+            color: #ffa500;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .header p {
+            color: #cccccc;
+            font-size: 1.1rem;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 255, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .demo-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .encode-section, .decode-section {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 10px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .encode-section:hover, .decode-section:hover {
+            border-color: #00ff00;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 0, 0.2);
+        }
+
+        .section-title {
+            color: #ffa500;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ff00;
+            font-weight: 600;
+        }
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 5px;
+            color: #00ff00;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+
+        .input-group textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00ff00, #00cc00);
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .result-area {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 5px;
+            padding: 15px;
+            min-height: 100px;
+            margin-top: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: pre-wrap;
+            color: #cccccc;
+        }
+
+        .sample-images {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .sample-image-option {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(0, 255, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sample-image-option:hover {
+            border-color: #00ff00;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+        }
+
+        .sample-image-option.selected {
+            border-color: #ffa500;
+            background: rgba(255, 165, 0, 0.1);
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
+        }
+
+        .sample-image-option img {
+            width: 60px;
+            height: 60px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .sample-image-option span {
+            display: block;
+            font-size: 0.8rem;
+            color: #00ff00;
+            font-weight: 600;
+        }
+
+        /* Tab styling */
+        .image-source-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            background: rgba(0, 0, 0, 0.6);
+            color: #00ff00;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: #00ff00;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff00;
+            color: #fff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Upload area styling */
+        .upload-area {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px dashed rgba(0, 255, 0, 0.3);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #00ff00;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .upload-area p {
+            color: #00ff00;
+            margin: 5px 0;
+            font-size: 1rem;
+        }
+
+        .upload-hint {
+            color: #666 !important;
+            font-size: 0.8rem !important;
+            font-style: italic;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px dashed rgba(0, 255, 0, 0.3);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 5px;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+
+        .status.error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+
+        .info-section {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .info-section h3 {
+            color: #ffa500;
+            margin-bottom: 15px;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .tech-badge {
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .demo-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .image-source-tabs {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .sample-images {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .sample-image-option img {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .upload-area {
+                padding: 20px;
+            }
+            
+            .upload-area i {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← Back to Portfolio</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Image Steganography with Encryption</h1>
+            <p>Hide encrypted messages in images with password protection</p>
+        </div>
+
+        <div class="demo-section">
+            <!-- Encode Section -->
+            <div class="encode-section">
+                <h2 class="section-title">ENCODE MESSAGE</h2>
+                
+                <div class="input-group">
+                    <label>Image Source:</label>
+                    <div class="image-source-tabs">
+                        <button class="tab-btn active" onclick="switchTab('samples')">Sample Images</button>
+                        <button class="tab-btn" onclick="switchTab('upload')">Upload from Device</button>
+                    </div>
+                    
+                    <div id="samples-tab" class="tab-content active">
+                        <div class="sample-images">
+                            <div class="sample-image-option" data-image="nature" onclick="selectSampleImage('nature')">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ibmF0dXJlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzQwODA0MDtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM2MGEwNjA7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzgwYzA4MDtzdG9wLW9wYWNpdHk6MSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSJ1cmwoI25hdHVyZSkiIC8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIzMCIgcj0iMTUiIGZpbGw9IiNmZmY3MDAiIC8+CiAgPHJlY3QgeD0iMjAiIHk9IjYwIiB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIGZpbGw9IiM4YjQ1MTMiIC8+CiAgPHBhdGggZD0iTTEwLDUwIEw5MCw1MCBMNzAsNzAgTDMwLDcwIFoiIGZpbGw9IiM2MjhhN2EiIC8+Cjwvc3ZnPgo=" alt="Nature">
+                                <span>Nature</span>
+                            </div>
+                            <div class="sample-image-option" data-image="abstract" onclick="selectSampleImage('abstract')">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYWJzdHJhY3QiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZmY2YjNhO3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3R5bGU9InN0b3AtY29sb3I6I2ZmNDc5MTtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojOWM0N2ZmO3N0b3Atb3BhY2l0eToxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9InVybCgjYWJzdHJhY3QpIiAvPgogIDxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEwIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjgiIC8+CiAgPGNpcmNsZSBjeD0iNzAiIGN5PSI2MCIgcj0iMTUiIGZpbGw9IiNmZmYiIG9wYWNpdHk9IjAuNiIgLz4KICA8cmVjdCB4PSIyMCIgeT0iMjAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC40IiAvPgo8L3N2Zz4K" alt="Abstract">
+                                <span>Abstract</span>
+                            </div>
+                            <div class="sample-image-option" data-image="tech" onclick="selectSampleImage('tech')">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0idGVjaCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDAwMDA7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzEwMTAxMDtzdG9wLW9wYWNpdHk6MSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSJ1cmwoI3RlY2gpIiAvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjMDBmZjAwIiBzdHJva2U9IiMwMGZmMDAiIHN0cm9rZS13aWR0aD0iMiIgLz4KICA8dGV4dCB4PSI1MCIgeT0iNDUiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iOCIgZmlsbD0iIzAwZmYwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Q09ERTwvdGV4dD4KICA8Y2lyY2xlIGN4PSIzMCIgY3k9IjYwIiByPSI1IiBmaWxsPSIjMDBmZjAwIiAvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNjAiIHI9IjUiIGZpbGw9IiMwMGZmMDAiIC8+CiAgPGNpcmNsZSBjeD0iNzAiIGN5PSI2MCIgcj0iNSIgZmlsbD0iIzAwZmYwMCIgLz4KPC9zdmc+Cg==" alt="Tech">
+                                <span>Tech</span>
+                            </div>
+                            <div class="sample-image-option" data-image="gradient" onclick="selectSampleImage('gradient')">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojNGE5MGUyO3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3R5bGU9InN0b3AtY29sb3I6IzdiNjhlZTtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZmY2YjNhO3N0b3Atb3BhY2l0eToxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9InVybCgjZ3JhZGllbnQpIiAvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMykiIC8+Cjwvc3ZnPgo=" alt="Gradient">
+                                <span>Gradient</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="upload-tab" class="tab-content">
+                        <div class="upload-area" onclick="document.getElementById('file-input').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click to select image from device</p>
+                            <p class="upload-hint">Supports: JPG, PNG, BMP (Max: 5MB)</p>
+                        </div>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+                    </div>
+                    
+                    <div class="image-preview" id="encode-preview">
+                        <span>Select a sample image or upload from device</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Secret Message:</label>
+                    <textarea id="encode-message" placeholder="Enter your secret message here..."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Password:</label>
+                    <input type="password" id="encode-password" placeholder="Enter encryption password">
+                </div>
+
+                <button class="btn" onclick="encodeMessage()">Encode & Generate Image</button>
+                
+                <div class="result-area" id="encode-result"></div>
+            </div>
+
+            <!-- Decode Section -->
+            <div class="decode-section">
+                <h2 class="section-title">DECODE MESSAGE</h2>
+                
+                <div class="input-group">
+                    <label>Encoded Image:</label>
+                    <div class="image-preview" id="decode-preview">
+                        <span>Encoded image will appear here</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Password:</label>
+                    <input type="password" id="decode-password" placeholder="Enter decryption password">
+                </div>
+
+                <button class="btn" onclick="decodeMessage()">Decode Message</button>
+                
+                <div class="result-area" id="decode-result"></div>
+            </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+            <h3>About This Project</h3>
+            <p>This is a Tkinter-based application that demonstrates image steganography with encryption. The real application uses:</p>
+            <ul style="margin: 15px 0; padding-left: 20px;">
+                <li>Python with Tkinter for the GUI</li>
+                <li>PIL (Python Imaging Library) for image processing</li>
+                <li>NumPy for numerical operations</li>
+                <li>Cryptography library (Fernet) for encryption</li>
+                <li>LSB (Least Significant Bit) steganography technique</li>
+            </ul>
+            
+            <div class="tech-stack">
+                <span class="tech-badge">Python</span>
+                <span class="tech-badge">Tkinter</span>
+                <span class="tech-badge">PIL</span>
+                <span class="tech-badge">NumPy</span>
+                <span class="tech-badge">Cryptography</span>
+                <span class="tech-badge">Steganography</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let encodedImageData = null;
+        let encodedMessage = null;
+        let selectedImageType = null;
+        let uploadedImageData = null;
+
+        // Sample image data (SVG encoded as base64)
+        const sampleImages = {
+            nature: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ibmF0dXJlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzQwODA0MDtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM2MGEwNjA7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzgwYzA4MDtzdG9wLW9wYWNpdHk6MSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSJ1cmwoI25hdHVyZSkiIC8+CiAgPGNpcmNsZSBjeD0iMTUwIiBjeT0iNDAiIHI9IjMwIiBmaWxsPSIjZmZmNzAwIiAvPgogIDxyZWN0IHg9IjYwIiB5PSIxMjAiIHdpZHRoPSIxODAiIGhlaWdodD0iNjAiIGZpbGw9IiM4YjQ1MTMiIC8+CiAgPHBhdGggZD0iTTMwLDEwMCBMMjcwLDEwMCBMMjEwLDE0MCBMMTQwLDE0MCBaIiBmaWxsPSIjNjI4YTdhIiAvPgo8L3N2Zz4K",
+            abstract: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYWJzdHJhY3QiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZmY2YjNhO3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3R5bGU9InN0b3AtY29sb3I6I2ZmNDc5MTtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojOWM0N2ZmO3N0b3Atb3BhY2l0eToxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9InVybCgjYWJzdHJhY3QpIiAvPgogIDxjaXJjbGUgY3g9IjkwIiBjeT0iNjAiIHI9IjIwIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjgiIC8+CiAgPGNpcmNsZSBjeD0iMjEwIiBjeT0iMTIwIiByPSIzMCIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC42IiAvPgogIDxyZWN0IHg9IjYwIiB5PSI0MCIgd2lkdGg9IjE4MCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmZmYiIG9wYWNpdHk9IjAuNCIgLz4KPC9zdmc+Cg==",
+            tech: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0idGVjaCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDAwMDA7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzEwMTAxMDtzdG9wLW9wYWNpdHk6MSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSJ1cmwoI3RlY2gpIiAvPgogIDxyZWN0IHg9IjYwIiB5PSI0MCIgd2lkdGg9IjE4MCIgaGVpZ2h0PSI4MCIgZmlsbD0iIzAwZmYwMCIgc3Ryb2tlPSIjMDBmZjAwIiBzdHJva2Utd2lkdGg9IjQiIC8+CiAgPHRleHQgeD0iMTUwIiB5PSI5MCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzAwZmYwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Q09ERTwvdGV4dD4KICA8Y2lyY2xlIGN4PSI5MCIgY3k9IjEyMCIgcj0iMTAiIGZpbGw9IiMwMGZmMDAiIC8+CiAgPGNpcmNsZSBjeD0iMTUwIiBjeT0iMTIwIiByPSIxMCIgZmlsbD0iIzAwZmYwMCIgLz4KICA8Y2lyY2xlIGN4PSIyMTAiIGN5PSIxMjAiIHI9IjEwIiBmaWxsPSIjMDBmZjAwIiAvPgo8L3N2Zz4K",
+            gradient: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojNGE5MGUyO3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3R5bGU9InN0b3AtY29sb3I6IzdiNjhlZTtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZmY2YjNhO3N0b3Atb3BhY2l0eToxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9InVybCgjZ3JhZGllbnQpIiAvPgogIDxjaXJjbGUgY3g9IjE1MCIgY3k9IjEwMCIgcj0iNjAiIGZpbGw9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4zKSIgLz4KPC9zdmc+Cg=="
+        };
+
+        // Function to switch tabs
+        function switchTab(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Reset image selection when switching tabs
+            if (tabName === 'samples') {
+                uploadedImageData = null;
+                selectSampleImage('nature'); // Default to nature image
+            } else {
+                selectedImageType = null;
+                document.querySelectorAll('.sample-image-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                const preview = document.getElementById('encode-preview');
+                preview.innerHTML = '<span>Click to select image from device</span>';
+            }
+        }
+
+        // Function to select sample image
+        function selectSampleImage(imageType) {
+            selectedImageType = imageType;
+            uploadedImageData = null; // Clear uploaded image
+            
+            // Remove selected class from all options
+            document.querySelectorAll('.sample-image-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            document.querySelector(`[data-image="${imageType}"]`).classList.add('selected');
+            
+            // Update preview
+            const preview = document.getElementById('encode-preview');
+            preview.innerHTML = `<img src="${sampleImages[imageType]}" alt="${imageType} Image" style="max-width: 100%; max-height: 100%; border-radius: 5px;">`;
+        }
+
+        // Function to handle file upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Check file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file (JPG, PNG, BMP)');
+                return;
+            }
+
+            // Check file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedImageData = e.target.result;
+                selectedImageType = null; // Clear sample image selection
+                
+                // Remove selected class from sample images
+                document.querySelectorAll('.sample-image-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Update preview
+                const preview = document.getElementById('encode-preview');
+                preview.innerHTML = `<img src="${uploadedImageData}" alt="Uploaded Image" style="max-width: 100%; max-height: 100%; border-radius: 5px;">`;
+                
+                // Update upload area text
+                const uploadArea = document.querySelector('.upload-area');
+                uploadArea.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <p>Image uploaded successfully!</p>
+                    <p class="upload-hint">${file.name} (${(file.size / 1024).toFixed(1)} KB)</p>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Initialize with default image
+        window.onload = function() {
+            // Select the first image by default
+            selectSampleImage('nature');
+        };
+
+        function encodeMessage() {
+            const message = document.getElementById('encode-message').value;
+            const password = document.getElementById('encode-password').value;
+            const resultArea = document.getElementById('encode-result');
+            
+            // Check if an image is selected (either sample or uploaded)
+            if (!selectedImageType && !uploadedImageData) {
+                resultArea.innerHTML = '❌ Please select a sample image or upload an image first';
+                resultArea.className = 'result-area status error';
+                return;
+            }
+            
+            if (!message || !password) {
+                resultArea.innerHTML = '❌ Please provide both message and password';
+                resultArea.className = 'result-area status error';
+                return;
+            }
+
+            // Determine image source
+            const imageSource = selectedImageType ? `sample ${selectedImageType} image` : 'uploaded image';
+            
+            // Simulate encoding process
+            resultArea.innerHTML = `🔄 Encoding message in ${imageSource}...\nEncrypting with Fernet...\nEmbedding in LSB...`;
+            resultArea.className = 'result-area';
+            
+            setTimeout(() => {
+                // Simulate successful encoding
+                encodedMessage = message;
+                encodedImageData = uploadedImageData || sampleImages[selectedImageType]; // Use uploaded or sample image
+                
+                document.getElementById('decode-preview').innerHTML = `<img src="${encodedImageData}" alt="Encoded Image" style="max-width: 100%; max-height: 100%; border-radius: 5px;">`;
+                
+                resultArea.innerHTML = `✅ Message encoded successfully!\n\n📝 Original message: "${message}"\n🖼️ Image source: ${imageSource}\n🔐 Encrypted and embedded in image\n💾 Image ready for transmission`;
+                resultArea.className = 'result-area status success';
+            }, 2000);
+        }
+
+        function decodeMessage() {
+            const password = document.getElementById('decode-password').value;
+            const resultArea = document.getElementById('decode-result');
+            
+            if (!encodedMessage) {
+                resultArea.innerHTML = '❌ No encoded image available. Please encode a message first.';
+                resultArea.className = 'result-area status error';
+                return;
+            }
+            
+            if (!password) {
+                resultArea.innerHTML = '❌ Please enter the decryption password';
+                resultArea.className = 'result-area status error';
+                return;
+            }
+
+            // Simulate decoding process
+            resultArea.innerHTML = '🔄 Decoding message...\nExtracting LSB data...\nDecrypting with Fernet...';
+            resultArea.className = 'result-area';
+            
+            setTimeout(() => {
+                // Simulate successful decoding
+                resultArea.innerHTML = `✅ Message decoded successfully!\n\n📝 Decoded message: "${encodedMessage}"\n🔓 Decryption successful\n✨ Steganography demo complete!`;
+                resultArea.className = 'result-area status success';
+            }, 2000);
+        }
+
+        // Add some interactive effects
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px) scale(1.02)';
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // Add typing effect to result areas
+        function typeWriter(element, text, speed = 50) {
+            element.innerHTML = '';
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                }
+            }
+            type();
+        }
+    </script>
+</body>
+</html> 
